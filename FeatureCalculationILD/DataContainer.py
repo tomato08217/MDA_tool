@@ -1,0 +1,215 @@
+'''.
+Jun 17, 2018.
+Yang SONG, songyangmri@gmail.com
+'''
+
+import numpy as np
+import os
+import pandas as pd
+
+import copy
+import math
+
+
+class DataContainer:
+    '''
+    DataContainer is the key class of the FAE project. It is the node to connect different models. Almost all procesors
+    accept DataContainer and return a new DataContainer.
+    '''
+    def __init__(self, array=np.array([]), label=np.array([]), feature_name=[], case_name=[]):
+        self.__feature_name = feature_name  # 特征名称
+        self.__case_name = case_name        # 样本名称
+        self.__label = label                # 分类类别名称
+        self._array = array                 # 数据
+
+        if array.size != 0 and label.size != 0:
+            self.UpdateFrameByData()
+        else:
+            self.__df = None
+
+    def __IsNumber(self, input_data):
+        try:
+            float(input_data)
+            return True
+        except ValueError:
+            pass
+
+        try:
+            import unicodedata
+            unicodedata.numeric(input_data)
+            return True
+        except (TypeError, ValueError):
+            pass
+
+        return False
+
+    def IsValidNumber(self, input_data):
+        if not self.__IsNumber(input_data):
+            return False
+
+        if math.isnan(float(input_data)):
+            return False
+
+        return True
+
+    def IsEmpty(self):
+        if self._array.size > 0:
+            return False
+        else:
+            return True
+
+    def HasNonValidNumber(self):
+        array_flat = self._array.flatten()
+        for index in range(self._array.size):
+            if not self.IsValidNumber(array_flat[index]):
+                return True
+        return False
+
+    def FindNonValidNumberIndex(self):
+        for index0 in range(self._array.shape[0]):
+            for index1 in range(self._array.shape[1]):
+                if not self.IsValidNumber(self._array[index0,index1]):
+                    return index0,index1
+        return None,None
+
+    def Save(self, store_path):
+        self.UpdateFrameByData()
+        self.__df.to_csv(store_path, index='CaseName')
+
+    def LoadWithoutCase(self, file_path):
+        self.__init__()
+        try:
+            self.__df = pd.read_csv(file_path, header=0)
+            self.UpdateDataByFrame()
+        except:
+            print('1 Check the CSV file path. ')
+
+    def Load(self, file_path):
+        self.__init__()
+        try:
+            self.__df = pd.read_csv(file_path,dtype=str, header=0, index_col=0)
+            self.UpdateDataByFrame()
+        except:
+            print('2 Check the CSV file path. ')
+
+    def ShowInformation(self):
+        print('The number of cases is ', str(len(self.__case_name)))
+        print('The number of features is ', str(len(self.__feature_name)))
+        print('The cases are: ', self.__case_name)
+        print('The features are: ', self.__feature_name)
+
+        if len(np.unique(self.__label)) == 2:
+            positive_number = len(np.where(self.__label == np.max(self.__label))[0])
+            negative_number = len(self.__label) - positive_number
+            assert(positive_number + negative_number == len(self.__label))
+            print('The number of positive samples is ', str(positive_number))
+            print('The number of negative samples is ', str(negative_number))
+
+    def UpdateDataByFrame(self):
+        self.__case_name = list(self.__df.index)
+        self.__feature_name = list(self.__df.columns)
+        if 'label' in self.__feature_name:
+            label_name = 'label'
+            index = self.__feature_name.index('label')
+        elif 'Label' in self.__feature_name:
+            label_name = 'Label'
+            index = self.__feature_name.index('Label')
+        else:
+            print('No "label" in the index')
+            index = np.nan
+        self.__feature_name.pop(index)
+        self.__label = self.__df[label_name].values
+        self._array = np.asarray(self.__df[self.__feature_name].values, dtype=np.float64)
+
+    def UpdateFrameByData(self):     #由数据重新组装成data_container, 第一列是index self.__case_name，第二列是label，后面是feature
+        data = np.concatenate((self.__label[..., np.newaxis], self._array), axis=1)
+        header = copy.deepcopy(self.__feature_name)
+        header.insert(0, 'label')
+        index = self.__case_name
+
+        self.__df = pd.DataFrame(data=data, index=index, columns=header)
+
+    def RemoveUneffectiveFeatures(self):
+        removed_index = []
+        for index in range(len(self.__feature_name)):
+            vector = self._array[:, index]
+            if np.where(np.isnan(vector))[0].size > 0:
+                removed_index.append(index)
+
+        # Remove the feature name
+        removed_feature_name = [self.__feature_name[index] for index in removed_index]
+        for feature_name in removed_feature_name:
+            self.__feature_name.remove(feature_name)
+
+        new_array = np.delete(self._array, removed_index, axis=1)
+        self._array = new_array
+
+        self.UpdateFrameByData()
+
+    def RemoveUneffectiveCases(self):
+        removed_index = []
+        for index in range(len(self.__case_name)):
+            vector = self._array[index, :]
+            if np.where(np.isnan(vector))[0].size > 0:
+                removed_index.append(index)
+
+        # Remove the case name
+        removed_case_name = [self.__case_name[index] for index in removed_index]
+        for case_name in removed_case_name:
+            self.__case_name.remove(case_name)
+
+        new_array = np.delete(self._array, removed_index, axis=0)
+        self._array = new_array
+        new_label = np.delete(self.__label, removed_index, axis=0)
+        self.__label = new_label
+
+        self.UpdateFrameByData()
+
+    def LoadAndGetData(self, file_path):
+        self.Load(file_path)
+        return self.GetData()
+    def GetData(self):
+        return self._array, self.__label, self.__feature_name, self.__case_name
+
+    def GetFrame(self): return self.__df   # index + label + features
+    def GetArray(self): return self._array  # features
+    def GetLabel(self): return self.__label # label
+    def GetFeatureName(self): return self.__feature_name
+    def GetCaseName(self): return self.__case_name
+
+    def SetArray(self, array): self._array = array
+    def SetLabel(self, label):self.__label = label
+    def SetFeatureName(self, feature_name): self.__feature_name = feature_name
+    def SetCaseName(self, case_name): self.__case_name = case_name
+    def SetFrame(self, frame):
+        if 'label' in list(frame.columns) or 'Label' in list(frame.columns):
+            self.__df = frame
+        else:
+            if len(frame.index.tolist()) != self.__label.size:
+                print('Check the number of fram and the number of labels.')
+                return None
+            frame.insert(0, 'label', self.__label)
+            self.__df = frame
+
+        self.UpdateDataByFrame()
+
+
+def main():
+    # test FeatureReader
+    # feature_reader = DataContainer()
+    # array, label, feature_name, case_name = feature_reader.LoadAndGetData(r'..\Result\numeric_feature.csv')
+    # print(array.shape)
+    # print(label.shape)
+    # print(len(feature_name))
+    # print(len(case_name))
+    # feature_reader.SaveData(r'..\Result\NewNumericFeature.csv')
+
+    # Test Normalization
+    data = DataContainer()
+    data.Load(r'..\..\Example\numeric_feature.csv')
+    data.ShowInformation()
+    data.UsualNormalize(r'..\Example\normalization.csv')
+    data.ArtefactNormalize(r'..\Example\normalization.csv')
+
+if __name__ == '__main__':
+    main()

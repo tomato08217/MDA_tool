@@ -1,0 +1,61 @@
+name: Radiomics
+channels:
+  - glemaitre
+  - http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free
+  - http://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+  - http://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+  - http://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/msys2/
+dependencies:
+  - blas=1.0=mkl
+  - certifi=2016.2.28=py36_0
+  - cycler=0.10.0=py36_0
+  - icu=57.1=vc14_0
+  - imbalanced-learn=0.3.1=pyh2cb239c_0
+  - jpeg=9b=vc14_0
+  - libpng=1.6.30=vc14_1
+  - mkl=2017.0.3=0
+  - openssl=1.0.2l=vc14_0
+  - patsy=0.4.1=py36_0
+  - pyparsing=2.2.0=py36_0
+  - pyqt=5.6.0=py36_2
+  - pyqtgraph=0.10.0=py36_0
+  - python=3.6.2=0
+  - pytz=2017.2=py36_0
+  - qt=5.6.2=vc14_6
+  - scikit-learn=0.19.0=np113py36_0
+  - seaborn=0.8=py36_0
+  - setuptools=36.4.0=py36_1
+  - sip=4.18=py36_0
+  - statsmodels=0.8.0=np113py36_0
+  - tk=8.5.18=vc14_0
+  - vc=14=0
+  - vs2015_runtime=14.0.25420=0
+  - wheel=0.29.0=py36_0
+  - wincertstore=0.2=py36_0
+  - zlib=1.2.11=vc14_0
+  - pip:
+    - autograd==1.3
+    - autograd-gamma==0.4.2
+    - docopt==0.6.2
+    - future==0.18.2
+    - kiwisolver==1.2.0
+    - lifelines==0.24.3
+    - matplotlib==3.2.1
+    - numpy==1.18.0
+    - pandas==1.0.3
+    - pdfdocument==3.3
+    - pillow==7.0.0
+    - pip==20.0.2
+    - pykwalify==1.7.0
+    - pyqt5==5.14.2
+    - pyqt5-sip==12.7.2
+    - pyradiomics==3.0
+    - python-dateutil==2.8.1
+    - pywavelets==1.0.0
+    - pyyaml==5.3
+    - reportlab==3.5.34
+    - scipy==1.4.1
+    - simpleitk==1.2.4
+    - six==1.14.0
+prefix: C:\Users\SIEMENS\Anaconda3\envs\Radiomics
+
